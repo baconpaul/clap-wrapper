@@ -24,8 +24,6 @@
 
 cmake_minimum_required(VERSION 3.21)
 cmake_policy(SET CMP0091 NEW)
-set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13 CACHE STRING "Minimum macOS version")
-set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build Universal Always")
 if (NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
   if (WIN32)
     message(STATUS "CMAKE_MSVC_RUNTIME_LIBRARY not defined. Setting to static link")

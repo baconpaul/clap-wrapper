@@ -41,6 +41,7 @@ function(target_add_auv2_wrapper)
     set(bhtg ${AUV2_TARGET}-build-helper)
     set(bhsc "${CLAP_WRAPPER_CMAKE_CURRENT_SOURCE_DIR}/src/detail/auv2/build-helper/")
     add_executable(${bhtg} ${bhsc}/build-helper.cpp)
+    target_compile_options(${bhtg} PRIVATE $<$<VERSION_GREATER_EQUAL:${CMAKE_CXX_STANDARD},20>:-fno-char8_t>)
     target_link_libraries(${bhtg} PRIVATE
             clap-wrapper-shared-detail
             macos_filesystem_support
