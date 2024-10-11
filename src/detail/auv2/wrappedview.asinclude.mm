@@ -19,6 +19,7 @@
 @interface CLAP_WRAPPER_COCOA_CLASS_NSVIEW : NSView
 {
   free_audio::auv2_wrapper::ui_connection ui;
+  bool guiCreated;
   CFRunLoopTimerRef idleTimer;
   float lastScale;
   NSSize underlyingUISize;
@@ -29,6 +30,7 @@
 - (void)doIdle;
 - (void)dealloc;
 - (void)setFrame:(NSRect)newSize;
+- (void)viewDidMoveToWindow;
 
 @end
 
@@ -88,6 +90,7 @@ void CLAP_WRAPPER_TIMER_CALLBACK(CFRunLoopTimerRef timer, void *info)
   ui = *cont;
   ui._plugin->_ext._gui->create(ui._plugin->_plugin, CLAP_WINDOW_API_COCOA, false);
   auto gui = ui._plugin->_ext._gui;
+  guiCreated = true;
 
   // actually, the host should send an appropriate size,
   // yet, they actually just send utter garbage, so: don't care
@@ -135,6 +138,26 @@ void CLAP_WRAPPER_TIMER_CALLBACK(CFRunLoopTimerRef timer, void *info)
   return self;
 }
 
+- (void)viewDidMoveToWindow
+{
+  LOGINFO("[clap-wrapper] View did move to window {}", (size_t)[self window]);
+  if ([self window] == nil && guiCreated)
+  {
+    guiCreated = false;
+    if (idleTimer)
+    {
+      CFRunLoopTimerInvalidate(idleTimer);
+    }
+    auto gui = ui._plugin->_ext._gui;
+    gui->destroy(ui._plugin->_plugin);
+    // [self release];
+  }
+  else if (!guiCreated)
+  {
+    LOGINFO("[clap-wrapper] Trying to add non-created gui to window");
+  }
+}
+
 - (void)doIdle
 {
   // auto gui = ui._plugin->_ext._gui;
@@ -142,13 +165,17 @@ void CLAP_WRAPPER_TIMER_CALLBACK(CFRunLoopTimerRef timer, void *info)
 - (void)dealloc
 {
   LOGINFO("[clap-wrapper] NS View dealloc");
-  if (idleTimer)
-  {
-    CFRunLoopTimerInvalidate(idleTimer);
-  }
-  auto gui = ui._plugin->_ext._gui;
-  gui->destroy(ui._plugin->_plugin);
 
+  if (guiCreated)
+  {
+    guiCreated = false;
+    if (idleTimer)
+    {
+      CFRunLoopTimerInvalidate(idleTimer);
+    }
+    auto gui = ui._plugin->_ext._gui;
+    gui->destroy(ui._plugin->_plugin);
+  }
   [super dealloc];
 }
 - (void)setFrame:(NSRect)newSize
